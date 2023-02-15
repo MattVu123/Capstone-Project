@@ -1,0 +1,211 @@
+---
+title: "Other Analysis"
+author: "Matthew Vu"
+date: "2023-02-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+# Data
+The dataset is used for this project is titled "diabetes_binary_5050split_health_indicators_BRFSS2015" by kaggle user Alex Teboul.  The dataset is a 6.35 megabyte .csv file, and is derived from the CDC's the CDC's Behavioral Risk Factor Surveillance System (BRFSS), which is the United State's most reliable, documented, and researched system for health-related telephone surveys for all 50 states and territories.  Also, the dataset consists of 70,692 observations and 22 variables.  These 70,692 observations from the 2015 BRFSS survey responses; however, the distributor of the dataset  to the These 22 variables pertain to answers to health-related survey questions, such as general health status, habits, behaviors, exercise, and chronic health conditions, as well as  calculated values based on these answers, for instance, body mass index (BMI).
+
+## Load in data
+The code below loads in the data
+```{r}
+data = read.csv("data.csv", 
+                header = T, 
+                colClasses = c("factor", # Diabetes_binary
+                               "factor", # HighBP
+                               "factor", # HighChol 
+                               "factor", # CholCheck,
+                               "numeric", # BMI
+                               "factor", # Smoker
+                               "factor", # Stroke
+                               "factor", # HeartDiseaseorAttack
+                               "factor", # PhysActivity
+                               "factor", # fruits
+                               "factor", # veggies
+                               "factor", # HvyAlcoholConsump
+                               "factor", # AnyHealthcare,
+                               "factor", # NoDocdbCost,
+                               "factor", # GenHlth
+                               "numeric", # MentHlth
+                               "numeric", # PhysHlth
+                               "factor", # DiffWalk
+                               "factor", # Sex,
+                               "numeric", # Age,
+                               "factor", # Education
+                               "factor" # Income
+                               ))
+```
+
+## split the data into training and test set
+The code below performs the data split
+```{r}
+set.seed(123)
+sample = sample(c(TRUE, FALSE), nrow(data), replace=TRUE, prob=c(0.7,0.3))
+train_data = as.data.frame(data[sample, ])
+test_data = as.data.frame(data[!sample, ])
+```
+
+# Perform exploratory data analysis
+
+## First, analyze smoking
+
+The code below displays the distribution of smokers in the dataset
+```{r}
+train_data %>%
+  ggplot() + 
+  geom_bar(mapping = aes(x = Smoker)) +
+  labs(title = "The distribution of smokers in the dataset", 
+  subtitle = "Have you smoked at least 100 cigarettes in your entire life?") + 
+  scale_x_discrete(labels = c(FALSE, TRUE)) +
+  theme_classic()
+```
+The plot above shows that the dataset mostly consists of individuals who are non-smokers.
+
+The code below draws the graph for the proportion of of diabetic and non-diabetic people who are smokers and non-smokers. 
+```{r}
+train_data %>%
+ggplot() +
+  geom_bar(mapping = aes(x = Diabetes_binary, fill = Smoker)) +
+  labs(title = "The proportion of diabetic and non-diabetic people who 
+       smoked more than 100 cigarettes in their life", 
+       x = "Diabetes") +
+  scale_x_discrete(labels = c(FALSE, TRUE)) + 
+  scale_fill_discrete(labels = c(FALSE, TRUE)) +
+  theme_classic()
+```
+The plot above shows that a greater proportion of people who have diabetes have smoked more than 100 cigarettes in their life.
+
+The code below performs a chi-square test of independence to see if the diabetes and smoking are independent or related.
+```{r}
+chisq.test(table(train_data$Smoker, train_data$Diabetes_binary))
+```
+Because the p-value is less than 0.05, we have sufficient evidence that diabetes and smoking more than 100 cigarettes in ones life are significantly associated.
+
+## Second, analyize high blood pressure
+
+The code below displays the distribution of individuals with high blood pressure in the dataset
+```{r}
+train_data %>%
+  ggplot() + 
+  geom_bar(mapping = aes(x = HighBP)) +
+  labs(title = "The distribution of individuals with high blood pressure in the dataset", 
+       subtitle = "Adults who have been told they have high blood pressure by a doctor, nurse, or other health professional") + 
+  scale_x_discrete(labels = c(FALSE, TRUE)) +
+  theme_classic()
+```
+The plot above shows that the dataset has a greater proportion of individuals who have high blood pressure than do not.
+
+The code below draws the graph for the proportion of of diabetic and non-diabetic people who have and do not have high blood pressure. 
+```{r}
+train_data %>%
+ggplot() +
+  geom_bar(mapping = aes(x = Diabetes_binary, fill = HighBP)) +
+  labs(title = "The proportion of diabetic and non-diabetic 
+       people who have and do not have high blood pressure", 
+       x = "Diabetes") +
+  scale_x_discrete(labels = c(FALSE, TRUE)) + 
+  scale_fill_discrete(labels = c(FALSE, TRUE)) +
+  theme_classic()
+```
+The plot above shows that a greater proportion of people who have diabetes have high blood pressure.
+
+
+The code below performs a chi-square test of independence to see if the diabetes and high blood pressure are independent or related.
+```{r}
+chisq.test(table(train_data$HighBP, train_data$Diabetes_binary))
+```
+Because the p-value is less than 0.05, we have sufficient evidence that diabetes and high blood pressure are significantly associated.
+
+## Third, analyze difficulty walking
+The code below displays the distribution of individuals who have difficulty walking or climbing stairs in the dataset
+```{r}
+train_data %>%
+  ggplot() + 
+  geom_bar(mapping = aes(x = DiffWalk)) +
+  labs(title = "The distribution of individuals who have difficulty walking or climbing stairs in the dataset", 
+       subtitle = "Do you have serious difficulty walking or climbing stairs?") + 
+  scale_x_discrete(labels = c(FALSE, TRUE)) +
+  theme_classic()
+```
+The plot above shows that the dataset has a greater proportion of individuals do not have difficulty walking or climbing stairs.
+
+The code below draws the graph for the proportion of of diabetic and non-diabetic people who have difficulty walking or climbing stairs. 
+```{r}
+train_data %>%
+ggplot() +
+  geom_bar(mapping = aes(x = Diabetes_binary, fill = DiffWalk)) +
+  labs(title = "The proportion of diabetic and non-diabetic 
+       people who have difficulty walking or climbing stairs", 
+       x = "Diabetes") +
+  scale_x_discrete(labels = c(FALSE, TRUE)) + 
+  scale_fill_discrete(labels = c(FALSE, TRUE)) +
+  theme_classic()
+```
+The plot above shows that a greater proportion of people who have diabetes have difficulty walking or climbing stairs.
+
+
+The code below performs a chi-square test of independence to see if the diabetes and diffuclty walking or climbing stairs are independent or related.
+```{r}
+chisq.test(table(train_data$DiffWalk, train_data$Diabetes_binary))
+```
+Because the p-value is less than 0.05, we have sufficient evidence that diabetes and difficulty walking or climbing stairs are significantly associated.
+
+## Fourth, analyze heavy drinkers
+
+The code below displays the distribution of heavy drinkers in the dataset
+```{r}
+train_data %>%
+  ggplot() + 
+  geom_bar(mapping = aes(x = HvyAlcoholConsump)) +
+  labs(title = "The distribution of heavy drinkers in the dataset", 
+  subtitle = "Adult men having more than 14 drinks per week and adult women having more than 7 drinks per week") + 
+  scale_x_discrete(labels = c(FALSE, TRUE)) +
+  theme_classic()
+```
+The plot above shows that the dataset mostly consists of individuals who are not heavy drinkers.
+
+The code below draws the graph for the proportion of of diabetic and non-diabetic people who are smokers and non-smokers. 
+```{r}
+train_data %>%
+ggplot() +
+  geom_bar(mapping = aes(x = Diabetes_binary, fill = HvyAlcoholConsump)) +
+  labs(title = "The proportion of diabetic and non-diabetic people who 
+       are heavy drinkers", 
+       x = "Diabetes") +
+  scale_x_discrete(labels = c(FALSE, TRUE)) + 
+  scale_fill_discrete(labels = c(FALSE, TRUE)) +
+  theme_classic()
+```
+The plot above shows that a greater proportion of people who do not have diabetes are heavy drinkers.
+
+The code below performs a chi-square test of independence to see if the diabetes and heavy drinking are independent or related.
+```{r}
+chisq.test(table(train_data$HvyAlcoholConsump, train_data$Diabetes_binary))
+```
+Because the p-value is less than 0.05, we have sufficient evidence that not have diabetes and heavy drinking are significantly associated.
+
+This is strange because alcohol has a lot of sugar, which can equate to diabetes.  However, it makes sense that there are a greater proportion of non-diabetic people who are heavy drinkers than diabetic people because when people have diabetes, they do not want to drink because it might kill them.  As a result, this variable might not be the best variable to continue on with our analysis.  Also, this might be caused by the fact that so few observations are heavy drinkers.  A better variable might be "have you been a heavy or binge drinker in the past".
+
+## Perform hypothesis testing of diet
+
+The code below displays the distribution of people who eat fruits in the dataset
+```{r}
+train_data %>%
+  ggplot() + 
+  geom_bar(mapping = aes(x = HvyAlcoholConsump)) +
+  labs(title = "The distribution of heavy drinkers in the dataset", 
+  subtitle = "Adult men having more than 14 drinks per week and adult women having more than 7 drinks per week") + 
+  scale_x_discrete(labels = c(FALSE, TRUE)) +
+  theme_classic()
+```
+
+
+
+
