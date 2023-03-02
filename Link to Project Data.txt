@@ -1,0 +1,3 @@
+Special Note: The reason the link to the data is provided rather than the actual .csv file is the .csv file is over 500 MB and cannot be uploaded to GitHub, reliably.
+
+Link: https://www.kaggle.com/datasets/cdc/behavioral-risk-factor-surveillance-system

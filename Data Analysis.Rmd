@@ -1,0 +1,388 @@
+---
+title: "Data Cleaning Process of Entire Dataset"
+author: "Matthew Vu"
+date: "2023-02-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(DescTools)
+library(corrplot)
+```
+
+# 1. Import the data
+```{r}
+# load in the data
+data_raw = read.csv("C:\\Users\\Paul_\\Documents\\Backup\\COLLEGE\\SPRING 2023 SEMESTER\\CDS 492\\Capstone Project\\project data\\brfss_2015.csv")
+```
+
+```{r}
+# view the first 6 rows
+head(data_raw)
+```
+
+```{r}
+# view dimensions
+dim(data_raw)
+```
+```{r}
+# select columns that might be useful in diabetes risk prediction
+data_reduced = data_raw %>%
+  select(
+    DIABETE3, # diabetes
+    X_RFHYPE5, # high blood pressure
+    TOLDHI2,  # high cholesterol
+    X_CHOLCHK, # cholesterol checked?
+    X_BMI5,    # BMI
+    SMOKE100, # smoked 100
+    CVDSTRK3, # stroke?
+    X_MICHD,  # heart disease
+    X_TOTINDA, # physical activity
+    X_FRTLT1, # fruit
+    X_VEGLT1, # veggies
+    X_RFDRHV5, # heavy drinker
+    HLTHPLN1, # have health coverage?
+    MEDCOST, # could not see a doctor?
+    GENHLTH, # general health
+    MENTHLTH, # mental health
+    PHYSHLTH, # physical health
+    DIFFWALK, # difficulty walking
+    SEX,     # sex
+    X_AGEG5YR, # age
+    EDUCA,   # education level
+    INCOME2 # income level
+  )
+```
+
+# 2. Data Preparation
+
+# 2.1 drop rows with missing values
+```{r}
+# drop Missing Values
+data_reduced2 = drop_na(data_reduced)
+```
+
+# 2.2 Modify and clean the values to be more suitable to ML algorithms
+```{r}
+# diabetes column
+# originally: 1 described yes; 2 described yes; but only during pregnancy; 3 described no; 7 described don't know; 9 describes refused; blank described missing.
+# so, I kept 1 to describe yes; however, I changed 2 and 3, to 0 to describe no diabetes.
+data_reduced2$DIABETE3 = recode(data_reduced2$DIABETE3, "1" = "1", "2" = "0", "3" = "0", "4" = "1")
+data_reduced2$DIABETE3 = as.factor(data_reduced2$DIABETE3)
+unique(data_reduced2$DIABETE3)
+```
+```{r}
+# 1. high BP column
+data_reduced2$X_RFHYPE5 = recode(data_reduced2$X_RFHYPE5, "1" = "0", "2" = "1")
+data_reduced2$X_RFHYPE5 = as.factor(data_reduced2$X_RFHYPE5)
+unique(data_reduced2$X_RFHYPE5)
+```
+```{r}
+# high cholesterol
+data_reduced2$TOLDHI2 = recode(data_reduced2$TOLDHI2, "2" = "0", "1" = "1")
+data_reduced2$TOLDHI2 = as.factor(data_reduced2$TOLDHI2)
+unique(data_reduced2$TOLDHI2)
+```
+```{r}
+# recode checked cholesterol
+data_reduced2$X_CHOLCHK = recode(data_reduced2$X_CHOLCHK, "1" = "1", "2" = "0", "3" = "0")
+data_reduced2$X_CHOLCHK = as.factor(data_reduced2$X_CHOLCHK)
+unique(data_reduced2$X_CHOLCHK)
+```
+```{r}
+# clean BMI
+data_reduced2$X_BMI5 = data_reduced2$X_BMI5 / 100
+data_reduced2$X_BMI5 = as.numeric(data_reduced2$X_BMI5)
+hist(data_reduced2$X_BMI5)
+```
+```{r}
+# recode smoker status
+data_reduced2$SMOKE100 = recode(data_reduced2$SMOKE100, "1" = "1", "2" = "0")
+data_reduced2$SMOKE100 = as.factor(data_reduced2$SMOKE100)
+unique(data_reduced2$SMOKE100)
+```
+```{r}
+# recode stroke status
+data_reduced2$CVDSTRK3 = recode(data_reduced2$CVDSTRK3, "1" = "1", "2" = "0")
+data_reduced2$CVDSTRK3 = as.factor(data_reduced2$CVDSTRK3)
+unique(data_reduced2$CVDSTRK3)
+```
+```{r}
+# recode heart disease
+data_reduced2$X_MICHD = recode(data_reduced2$X_MICHD, "1" = "1", "2" = "0")
+data_reduced2$X_MICHD = as.factor(data_reduced2$X_MICHD)
+unique(data_reduced2$X_MICHD)
+```
+```{r}
+# recode physical activity
+data_reduced2$X_TOTINDA = recode(data_reduced2$X_TOTINDA, "1" = "1", "2" = "0")
+data_reduced2$X_TOTINDA = as.factor(data_reduced2$X_TOTINDA)
+unique(data_reduced2$X_TOTINDA)
+```
+```{r}
+# recode fruits
+data_reduced2$X_FRTLT1 = recode(data_reduced2$X_FRTLT1, "1" = "1", "2" = "0")
+data_reduced2$X_FRTLT1 = as.factor(data_reduced2$X_FRTLT1)
+unique(data_reduced2$X_FRTLT1)
+```
+```{r}
+# recode veggies
+data_reduced2$X_VEGLT1 = recode(data_reduced2$X_VEGLT1, "1" = "1", "2" = "0")
+data_reduced2$X_VEGLT1 = as.factor(data_reduced2$X_VEGLT1)
+unique(data_reduced2$X_VEGLT1)
+```
+```{r}
+# recode heavy drinker
+data_reduced2$X_RFDRHV5 = recode(data_reduced2$X_RFDRHV5, "1" = "0", "2" = "1")
+data_reduced2$X_RFDRHV5 = as.factor(data_reduced2$X_RFDRHV5)
+unique(data_reduced2$X_RFDRHV5)
+```
+```{r}
+# recode health coverage?
+data_reduced2$HLTHPLN1 = recode(data_reduced2$HLTHPLN1, "1" = "1", "2" = "0")
+data_reduced2$HLTHPLN1 = as.factor(data_reduced2$HLTHPLN1)
+unique(data_reduced2$HLTHPLN1)
+```
+```{r}
+# recode could not doc due to cost
+data_reduced2$MEDCOST = recode(data_reduced2$MEDCOST, "1" = "1", "2" = "0")
+data_reduced2$MEDCOST = as.factor(data_reduced2$MEDCOST)
+unique(data_reduced2$MEDCOST)
+```
+```{r}
+# clean general health
+data_reduced2 = data_reduced2 %>%
+  filter(
+    GENHLTH != "7",
+    GENHLTH != "9",
+    !is.na(GENHLTH)
+  ) %>%
+  mutate(
+    GENHLTH = as.factor(GENHLTH)
+  )
+unique(data_reduced2$GENHLTH)
+```
+```{r}
+# recode mental health
+data_reduced2 = data_reduced2 %>%
+  filter(
+    MENTHLTH != 77,
+    MENTHLTH != 99
+  ) %>%
+  mutate(
+    MENTHLTH = if_else(MENTHLTH == 88, 0, MENTHLTH),
+    MENTHLTH = as.numeric(MENTHLTH)
+  )
+hist(data_reduced2$MENTHLTH)
+```
+```{r}
+# recode physical health
+data_reduced2 = data_reduced2 %>%
+  filter(
+    PHYSHLTH != 77,
+    PHYSHLTH != 99,
+    !is.na(PHYSHLTH)
+  ) %>%
+  mutate(
+    PHYSHLTH = if_else(PHYSHLTH == 88, 0, PHYSHLTH),
+    PHYSHLTH = as.numeric(PHYSHLTH)
+  )
+hist(data_reduced2$PHYSHLTH)
+```
+```{r}
+# recode difficulty walking
+data_reduced2$DIFFWALK = recode(data_reduced2$MEDCOST, "1" = "1", "2" = "0")
+data_reduced2$DIFFWALK = as.factor(data_reduced2$DIFFWALK)
+unique(data_reduced2$DIFFWALK)
+```
+```{r}
+# recode sex
+data_reduced2$SEX = recode(data_reduced2$SEX, "1" = "M", "2" = "F")
+data_reduced2$SEX = as.factor(data_reduced2$SEX)
+unique(data_reduced2$SEX)
+```
+
+```{r}
+# clean age category
+data_reduced2 = data_reduced2 %>%
+  filter(
+    X_AGEG5YR != 14
+  ) %>%
+  mutate(
+    X_AGEG5YR = as.factor(X_AGEG5YR)
+  )
+sort(unique(data_reduced2$X_AGEG5YR))
+```
+```{r}
+# clean education level
+data_reduced2 = data_reduced2 %>%
+  filter(
+    EDUCA != 9
+  ) %>%
+  mutate(
+    EDUCA = as.factor(EDUCA)
+  )
+sort(unique(data_reduced2$EDUCA))
+```
+```{r}
+# clean income level
+data_reduced2 = data_reduced2 %>%
+  filter(
+    INCOME2 != 77,
+    INCOME2 != 99,
+    !is.na(INCOME2)
+  ) %>%
+  mutate(
+    INCOME2 = as.factor(INCOME2)
+  )
+sort(unique(data_reduced2$INCOME2))
+```
+
+```{r}
+# further drop Missing Values
+data_reduced2 = drop_na(data_reduced2)
+dim(data_reduced2)
+```
+
+```{r}
+# rename columns
+data_reduced2 = data_reduced2 %>%
+  rename(
+    diabetes = DIABETE3,
+    high_bp = X_RFHYPE5,
+    high_chol = TOLDHI2,
+    chol_check = X_CHOLCHK,
+    BMI = X_BMI5,
+    smoker = SMOKE100,
+    stroke = CVDSTRK3,
+    heart_disease = X_MICHD,
+    physical_activity = X_TOTINDA,
+    fruits = X_FRTLT1,
+    veggies = X_VEGLT1,
+    heavy_drinker = X_RFDRHV5,
+    health_coverage = HLTHPLN1,
+    NoDocbcCost = MEDCOST,
+    general_health = GENHLTH,
+    mental_health = MENTHLTH,
+    physical_health = PHYSHLTH,
+    diff_walking = DIFFWALK,
+    sex = SEX,
+    age_cat = X_AGEG5YR,
+    education_level = EDUCA,
+    income_level = INCOME2
+  )
+```
+
+```{r}
+# view dataset
+head(data_reduced2)
+```
+
+```{r}
+# check how many diabetic people are in the data
+data_reduced2 %>%
+  group_by(diabetes) %>%
+  summarize(
+    count = n()
+  )
+```
+
+There is a class imbalance
+
+```{r}
+# create separate the datasets consisting of non-diabetic and diabetic individuals
+data_non_diabetic = data_reduced2 %>%
+  filter(
+    diabetes == 0
+  )
+data_diabetic = data_reduced2 %>%
+  filter(
+    diabetes == 1
+  )
+
+# randomly sample an equal number of non-diabetic individuals
+set.seed(123)
+random_sample = data_non_diabetic[sample(nrow(data_non_diabetic), size = nrow(data_diabetic)),]
+
+# combine datasets
+data_balanced = bind_rows(random_sample, data_diabetic)
+```
+
+```{r}
+# check to make sure that the class imbalance issue is resolved
+data_balanced %>%
+  group_by(diabetes) %>%
+  summarize(
+    count = n()
+  )
+```
+
+
+# 3. Exploratory Data Analysis
+
+# 3.1 Univariate Data Exploration
+```{r}
+# look at the structure of the dataset
+str(data_balanced)
+```
+```{r}
+# summary statistics of the variables
+summary(data_balanced)
+```
+
+
+```{r}
+# bar plots of all the categorical data
+for (var in c(1:4, 6:15, 18:22)){
+  plot = ggplot(data_balanced, aes(x = data_balanced[,var])) + 
+  geom_bar() + 
+  labs(title = paste("The distribution of", names(data_balanced)[var]), 
+       x = names(data_balanced)[var]) + 
+    theme_classic()
+  print(plot)
+}
+```
+```{r}
+# histograms of all the numerical data
+for (var in c(5, 16:17)){
+  plot = ggplot(data_balanced, aes(x = data_balanced[,var])) + 
+  geom_histogram() + 
+  labs(title = paste("The distribution of", names(data_balanced)[var]), 
+       x = names(data_balanced)[var]) + 
+    theme_classic()
+  print(plot)
+}
+```
+
+# 3.2 Multivariate Data Exploration
+
+```{r}
+# bar plots of all the categorical data
+for (var in c(2:4, 6:15, 18:22)){
+  plot = ggplot(data_balanced, aes(x = data_balanced[,1], fill = data_balanced[,var])) + 
+  geom_bar() + 
+  labs(title = paste("The proportion of diabetic and non-diabetic people for each category of\n", names(data_balanced)[var]), 
+       x = "diabetes") +
+    scale_fill_discrete(name = names(data_balanced)[var]) +
+    theme_classic()
+  print(plot)
+}
+```
+```{r}
+for (i in c(2:4, 6:15, 18:22)){
+  print(paste("Chi-squared test of independence between diabetes and", names(data_balanced)[i], "->"))
+  print(chisq.test(table(data_balanced[,1], data_balanced[,i])))
+}
+```
+
+```{r}
+# check for multicollinearity amongst the categorical predictors
+corrplot::corrplot(DescTools::PairApply(data_balanced[, c(1:4, 6:15, 18:22)], DescTools::CramerV))
+```
+```{r}
+DescTools::PairApply(data_balanced[, c(1:4, 6:15, 18:22)], DescTools::CramerV)
+```
+
+
